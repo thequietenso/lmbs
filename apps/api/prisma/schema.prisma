@@ -1,0 +1,92 @@
+generator client {
+  provider     = "prisma-client-js"
+  output       = "../generated/prisma"
+}
+datasource db {
+provider = "postgresql"
+}
+
+model Genre {
+id Int @id @default(autoincrement())
+name String @unique
+slug String @unique
+description String?
+books Book[]
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+}
+
+model Book {
+id String @id @default(cuid())
+title String
+author String
+isbn String? @unique
+genreId Int
+genre Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+pages Int?
+publishedYear Int?
+totalCopies Int @default(3)
+availableCopies Int @default(3)
+shelfLocation String?
+description String?
+coverGradient String?
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+loans Loan[]
+reviews Review[]
+}
+
+model Member {
+id String @id @default(cuid())
+name String
+email String @unique
+phone String?
+membershipNumber String @unique
+status String @default("active") // active | suspended | expired
+joinedDate DateTime @default(now())
+bio String?
+hobbies String?
+loans Loan[]
+reviews Review[]
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+}
+
+model Loan {
+id String @id @default(cuid())
+bookId String
+book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+memberId String
+member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+borrowDate DateTime @default(now())
+dueDate DateTime
+returnDate DateTime?
+status String @default("active") // active | returned | overdue
+fineAmount Float? @default(0)
+notes String?
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+}
+
+model Activity {
+id String @id @default(cuid())
+type String // borrow | return | add_book | update_book | delete_book | add_member | sync
+title String
+description String
+timestamp DateTime @default(now())
+createdAt DateTime @default(now())
+}
+
+model Review {
+id String @id @default(cuid())
+rating Int // 1–5
+comment String?
+bookId String
+book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+userId String
+user Member @relation(fields: [userId], references: [id], onDelete: Cascade)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+
+@@unique([bookId, userId])
+}
