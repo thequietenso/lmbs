@@ -1,34 +1,43 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { GenreService } from './genre.service';
-import { CreateGenreDto } from './dto/create-genre.dto';
-import { UpdateGenreDto } from './dto/update-genre.dto';
-
-@Controller('genre')
+import { CreateGenreDto, PageQuery, UpdateGenreDto } from '../common/dto';
+import { Public, Staff } from '../authentication/guards';
+import type { AuthRequest } from '../authentication/guards';
+@Controller('genres')
+@Staff()
 export class GenreController {
-  constructor(private readonly genreService: GenreService) {}
-
-  @Post()
-  create(@Body() createGenreDto: CreateGenreDto) {
-    return this.genreService.create(createGenreDto);
+  constructor(private readonly genres: GenreService) {}
+  @Public() @Get() findAll(@Query() q: PageQuery) {
+    return this.genres.findAll(q);
   }
-
-  @Get()
-  findAll() {
-    return this.genreService.findAll();
+  @Public() @Get(':id') findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.genres.findOne(id);
   }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.genreService.findOne(+id);
+  @Post() create(@Body() dto: CreateGenreDto, @Req() r: AuthRequest) {
+    return this.genres.create(dto, r.user.id);
   }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGenreDto: UpdateGenreDto) {
-    return this.genreService.update(+id, updateGenreDto);
+  @Put(':id') update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateGenreDto,
+    @Req() r: AuthRequest,
+  ) {
+    return this.genres.update(id, dto, r.user.id);
   }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.genreService.remove(+id);
+  @Delete(':id') remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() r: AuthRequest,
+  ) {
+    return this.genres.remove(id, r.user.id);
   }
 }

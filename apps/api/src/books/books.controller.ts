@@ -1,27 +1,46 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { BooksService } from './books.service';
-
-@Controller('api/v1/books')
+import { CreateBookDto } from './dto/create-book.dto';
+import { UpdateBookDto } from './dto/update-book.dto';
+import { BookQuery } from '../common/dto';
+import { Public, Staff } from '../authentication/guards';
+import type { AuthRequest } from '../authentication/guards';
+@Controller('books')
+@Staff()
 export class BooksController {
-  constructor(private readonly booksService: BooksService) {}
-
-  @Get()
-  findAll() {
-    return this.booksService.findAll();
+  constructor(private readonly books: BooksService) {}
+  @Public() @Get() findAll(@Query() query: BookQuery) {
+    return this.books.findAll(query);
   }
-
-  @Post()
-  create(@Body() createBookDto: { title: string; author: string; pages?: number; publishedYear?: number }) {
-    return this.booksService.create(createBookDto);
+  @Public() @Get(':id') findOne(@Param('id') id: string) {
+    return this.books.findOne(id);
   }
-
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateBookDto: { title?: string; author?: string; pages?: number; publishedYear?: number }) {
-    return this.booksService.update(id, updateBookDto);
+  @Post() create(
+    @Body() dto: CreateBookDto,
+    @Req() req: AuthRequest,
+    @Headers('idempotency-key') key?: string,
+  ) {
+    return this.books.create(dto, req.user.id, key);
   }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.booksService.remove(id);
+  @Put(':id') update(
+    @Param('id') id: string,
+    @Body() dto: UpdateBookDto,
+    @Req() req: AuthRequest,
+  ) {
+    return this.books.update(id, dto, req.user.id);
+  }
+  @Delete(':id') remove(@Param('id') id: string, @Req() req: AuthRequest) {
+    return this.books.remove(id, req.user.id);
   }
 }

@@ -1,27 +1,59 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+} from '@nestjs/common';
 import { MembersService } from './members.service';
-
-@Controller('api/v1/members')
+import { LoansService } from '../loans/loans.service';
+import {
+  CreateMemberDto,
+  MemberQuery,
+  PageQuery,
+  UpdateMemberDto,
+} from '../common/dto';
+import { Staff } from '../authentication/guards';
+import type { AuthRequest } from '../authentication/guards';
+@Controller('members')
+@Staff()
 export class MembersController {
-  constructor(private readonly membersService: MembersService) {}
-
-  @Get()
-  findAll() {
-    return this.membersService.findAll();
+  constructor(
+    private readonly members: MembersService,
+    private readonly loans: LoansService,
+  ) {}
+  @Get() findAll(@Query() query: MemberQuery) {
+    return this.members.findAll(query);
   }
-
-  @Post()
-  create(@Body() createMemberDto: { name: string; email: string; phone?: string; membershipNumber?: string; status?: string; bio?: string; hobbies?: string }) {
-    return this.membersService.create(createMemberDto);
+  @Get(':id') findOne(@Param('id') id: string) {
+    return this.members.findOne(id);
   }
-
-  @Put(':id')
-  update(@Param('id') id: string, @Body() updateMemberDto: { name?: string; email?: string; phone?: string; membershipNumber?: string; status?: string; bio?: string; hobbies?: string }) {
-    return this.membersService.update(id, updateMemberDto);
+  @Get(':id/loans') async memberLoans(
+    @Param('id') id: string,
+    @Query() query: PageQuery,
+  ) {
+    await this.members.findOne(id);
+    return this.loans.findAll({
+      page: query.page,
+      limit: query.limit,
+      memberId: id,
+    });
   }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.membersService.remove(id);
+  @Post() create(@Body() dto: CreateMemberDto, @Req() req: AuthRequest) {
+    return this.members.create(dto, req.user.id);
+  }
+  @Put(':id') update(
+    @Param('id') id: string,
+    @Body() dto: UpdateMemberDto,
+    @Req() req: AuthRequest,
+  ) {
+    return this.members.update(id, dto, req.user.id);
+  }
+  @Delete(':id') remove(@Param('id') id: string, @Req() req: AuthRequest) {
+    return this.members.remove(id, req.user.id);
   }
 }
