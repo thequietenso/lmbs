@@ -1,0 +1,31 @@
+-- Additive completion migration. Historical migrations are immutable.
+ALTER TABLE "Member" ADD COLUMN "passwordHash" TEXT, ADD COLUMN "role" TEXT NOT NULL DEFAULT 'patron', ADD COLUMN "deletedAt" TIMESTAMP(3);
+ALTER TABLE "Book" ADD COLUMN "deletedAt" TIMESTAMP(3);
+ALTER TABLE "Loan" ADD COLUMN "renewalCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Activity" ADD COLUMN "actorId" TEXT, ADD COLUMN "entityId" TEXT;
+CREATE TABLE "IdempotencyRecord" ("id" TEXT PRIMARY KEY, "requestHash" TEXT NOT NULL, "response" JSONB NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE INDEX "IdempotencyRecord_createdAt_idx" ON "IdempotencyRecord"("createdAt");
+CREATE INDEX "Book_genreId_idx" ON "Book"("genreId");
+CREATE INDEX "Book_title_idx" ON "Book"("title");
+CREATE INDEX "Book_deletedAt_idx" ON "Book"("deletedAt");
+CREATE INDEX "Member_status_deletedAt_idx" ON "Member"("status", "deletedAt");
+CREATE INDEX "Loan_memberId_status_idx" ON "Loan"("memberId", "status");
+CREATE INDEX "Loan_bookId_returnDate_idx" ON "Loan"("bookId", "returnDate");
+CREATE INDEX "Loan_dueDate_returnDate_idx" ON "Loan"("dueDate", "returnDate");
+CREATE INDEX "Activity_timestamp_idx" ON "Activity"("timestamp");
+-- NOT VALID preserves legacy invalid rows while enforcing all new/updated rows.
+ALTER TABLE "Book" ADD CONSTRAINT "Book_inventory_check" CHECK ("totalCopies" >= 0 AND "availableCopies" >= 0 AND "availableCopies" <= "totalCopies") NOT VALID;
+ALTER TABLE "Review" ADD CONSTRAINT "Review_rating_check" CHECK (rating BETWEEN 1 AND 5) NOT VALID;
+ALTER TABLE "Member" ADD CONSTRAINT "Member_role_check" CHECK (role IN ('patron','librarian','admin')) NOT VALID;
+ALTER TABLE "Member" ADD CONSTRAINT "Member_status_check" CHECK (status IN ('active','suspended','expired','inactive')) NOT VALID;
+ALTER TABLE "Loan" ADD CONSTRAINT "Loan_state_check" CHECK ((status = 'returned' AND "returnDate" IS NOT NULL) OR (status IN ('active','overdue') AND "returnDate" IS NULL)) NOT VALID;
+ALTER TABLE "Book" DROP CONSTRAINT "Book_genreId_fkey";
+ALTER TABLE "Book" ADD CONSTRAINT "Book_genreId_fkey" FOREIGN KEY ("genreId") REFERENCES "Genre"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Loan" DROP CONSTRAINT "Loan_bookId_fkey";
+ALTER TABLE "Loan" ADD CONSTRAINT "Loan_bookId_fkey" FOREIGN KEY ("bookId") REFERENCES "Book"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Loan" DROP CONSTRAINT "Loan_memberId_fkey";
+ALTER TABLE "Loan" ADD CONSTRAINT "Loan_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "Member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Review" DROP CONSTRAINT "Review_bookId_fkey";
+ALTER TABLE "Review" ADD CONSTRAINT "Review_bookId_fkey" FOREIGN KEY ("bookId") REFERENCES "Book"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Review" DROP CONSTRAINT "Review_userId_fkey";
+ALTER TABLE "Review" ADD CONSTRAINT "Review_userId_fkey" FOREIGN KEY ("userId") REFERENCES "Member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

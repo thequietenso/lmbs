@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: lmbs
+      POSTGRES_USER: lmbs
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lmbs -d lmbs"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  migrate:
+    build:
+      context: .
+      target: api
+    environment:
+      DATABASE_URL: postgresql://lmbs:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/lmbs
+    command: ["npx", "prisma", "migrate", "deploy", "--config", "prisma7.config.ts"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+  api:
+    build:
+      context: .
+      target: api
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://lmbs:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/lmbs
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in root .env}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      TRUST_PROXY_HOPS: "1"
+    expose:
+      - "3001"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+  web:
+    build:
+      context: .
+      target: web
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      - api
+volumes:
+  postgres_data:

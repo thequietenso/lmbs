@@ -1,0 +1,12 @@
+.git
+**/node_modules
+**/dist
+**/coverage
+**/.env
+**/.env.*
+!**/.env.example
+apps/api/generated
+lmbs-ui
+.superpowers
+.worktrees
+*.log

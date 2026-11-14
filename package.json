@@ -1,0 +1,40 @@
+{
+  "name": "lmbs",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Bibliotech library management monorepo",
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "packages/shared"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm run start:dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/api && npm run build --workspace=apps/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "test:workspace": "node --test tests/workspace.test.mjs",
+    "test": "npm run test:workspace && npm run test --workspace=apps/api -- --runInBand && npm run test --workspace=apps/web",
+    "test:e2e": "npm run test:e2e --workspace=apps/api -- --runInBand",
+    "db:generate": "npm run prisma:generate --workspace=apps/api",
+    "db:migrate": "npm run prisma:migrate --workspace=apps/api",
+    "db:deploy": "npm exec --workspace=apps/api -- prisma migrate deploy --config prisma7.config.ts",
+    "db:seed": "npm run prisma:seed --workspace=apps/api"
+  },
+  "overrides": {
+    "postcss": "8.5.32"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "concurrently": "10.0.6"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.6.0": true,
+    "@prisma/engines@7.10.1": true,
+    "prisma@7.10.1": true
+  }
+}
