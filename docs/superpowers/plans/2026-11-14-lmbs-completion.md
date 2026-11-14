@@ -66,5 +66,5 @@ Scope: core CRUD, circulation, activities, genres, reviews, statistics, health/v
 
 - [x] Obtain independent whole-branch code review; reproduce important findings with failing tests before fixes.
 - [x] Run full quality suite against final committed tree; inspect status and diff; keep main unchanged.
-- [ ] Push feature branch, open PR (draft if acceptance remains blocked), and read back PR/head SHA/tree/README to verify publication.
-- [ ] Report verified work, remaining acceptance limits, PR URL, and backup location. Journal a concise completion record only inside the user's allowed Hermes/Journal folder.
+- [x] Push feature branch, open PR (draft if acceptance remains blocked), and read back PR/head SHA/tree/README to verify publication.
+- [x] Report verified work, remaining acceptance limits, PR URL, and backup location. Journal a concise completion record only inside the user's allowed Hermes/Journal folder.

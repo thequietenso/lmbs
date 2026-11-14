@@ -74,3 +74,11 @@ The initial independent review identified four Important findings and no Critica
 - In-memory throttling and best-effort realtime are single-instance; there is no distributed limiter, durable outbox/replay, password reset/email verification, refresh-token rotation, fine-payment service or automatic backup/restore.
 - Full-text search/tagging, backend report exports and mobile apps remain future phases.
 - No hosted deployment, TLS termination, production load acceptance or hosted migration is claimed. Final GitHub CI/publication state is recorded after the push rather than inferred from local checks.
+
+## Publication checkpoint and cleanup
+
+Implementation commit `b0e9f9ba2a078f5bc818a14ab02b53ae6943c231` was pushed to `feat/complete-lmbs-monorepo`. PR **#1** in `thequietenso/lmbs` is open against `main`, unmerged. Readback matched all **129** published file blobs to the local committed tree; original `main` remains `eeb5cbc2f9ed272fb03c78a9a68c7ab4dcbaa0c3`.
+
+GitHub Actions run **43639507265** completed successfully for that implementation commit: clean install, client generation, migrations, build, lint, unit/client tests and real PostgreSQL e2e all executed and passed. Later documentation-only commits do not change that executable snapshot; their own checks are visible on the PR.
+
+Temporary native API/Vite/PostgreSQL processes and the `lmbs-verify` Compose deployment were stopped after acceptance. All verification ports were read back as closed. Private backup/test settings, database files, Compose volume and built images were preserved; no production service or hosted database was changed.
